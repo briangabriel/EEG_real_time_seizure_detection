@@ -43,8 +43,7 @@ def label_sampling_tuh(labels, feature_samplerate):
     remained = 0
     feature_intv = 1/float(feature_samplerate)
     for i in labels:
-        begin, end, label = i.split(" ")[:3]
-
+        begin, end, label = i.split(",")[1:4]
         intv_count, remained = divmod(float(end) - float(begin) + remained, feature_intv)
         y_target += int(intv_count) * str(GLOBAL_DATA['disease_labels'][label])
     return y_target
@@ -313,9 +312,9 @@ def generate_training_data_leadwise_tuh_train_final(file):
     ############################# part 1: labeling  ###############################
     label_file = open(file_name + "." + GLOBAL_DATA['label_type'], 'r') # EX) 00007235_s003_t003.tse or 00007235_s003_t003.tse_bi
     y = label_file.readlines()
-    y = list(y[2:])
-    y_labels = list(set([i.split(" ")[2] for i in y]))
-    signal_sample_rate = int(signal_headers[0]['sample_rate'])
+    y = list(y[6:]) #skip the header lines
+    y_labels = list(set([i.split(",")[2] for i in y]))
+    signal_sample_rate = int(signal_headers[0]['sample_frequency'])
     if sample_rate > signal_sample_rate:
         return
     if not all(elem in label_list_c for elem in GLOBAL_DATA['label_list']): # if one or more of ['EEG FP1', 'EEG FP2', ... doesn't exist
@@ -327,15 +326,15 @@ def generate_training_data_leadwise_tuh_train_final(file):
     # check if seizure patient or non-seizure patient
     patient_wise_dir = "/".join(file_name.split("/")[:-2])
     patient_id = file_name.split("/")[-3]
-    edf_list = search_walk({'path': patient_wise_dir, 'extension': ".tse_bi"})
+    edf_list = search_walk({'path': patient_wise_dir, 'extension': ".csv_bi"})
     patient_bool = False
     for tse_bi_file in edf_list:
         label_file = open(tse_bi_file, 'r') # EX) 00007235_s003_t003.tse or 00007235_s003_t003.tse_bi
         y = label_file.readlines()
-        y = list(y[2:])
+        y = list(y[6:])
         for line in y:
             if len(line) > 5:
-                if line.split(" ")[2] != 'bckg':
+                if line.split(",")[3] != 'bckg':
                     patient_bool = True
                     break
         if patient_bool:
@@ -351,7 +350,7 @@ def generate_training_data_leadwise_tuh_train_final(file):
         if label not in GLOBAL_DATA['label_list']:
             continue
 
-        if int(signal_headers[idx]['sample_rate']) > sample_rate:
+        if int(signal_headers[idx]['sample_frequency']) > sample_rate:
             secs = len(signal)/float(signal_sample_rate)
             samps = int(secs*sample_rate)
             x = sci_sig.resample(signal, samps)
@@ -368,8 +367,8 @@ def generate_training_data_leadwise_tuh_train_final(file):
     for lead_signal in GLOBAL_DATA['label_list']:
         signal_final_list_raw.append(signal_list[signal_label_list.index(lead_signal)])
 
-    new_length = len(signal_final_list_raw[0]) * (float(GLOBAL_DATA['feature_sample_rate']) / GLOBAL_DATA['sample_rate'])
-    
+    new_length = int(len(signal_final_list_raw[0]) * (float(GLOBAL_DATA['feature_sample_rate']) / GLOBAL_DATA['sample_rate']))
+
     if len(y_sampled) > new_length:
         y_sampled = y_sampled[:new_length]
     elif len(y_sampled) < new_length:
@@ -388,7 +387,11 @@ def generate_training_data_leadwise_tuh_train_final(file):
 
     # slice and save if training data
     new_data = {}
-    raw_data = torch.Tensor(signal_final_list_raw).permute(1,0)
+
+    #raw_data = torch.Tensor(signal_final_list_raw).permute(1,0)
+    # Makes it go faster!
+    raw_data = torch.from_numpy(np.array(signal_final_list_raw)).permute(1,0)
+
     raw_data = raw_data.type(torch.float16)
     
     min_seg_len_label = GLOBAL_DATA['min_binary_slicelength'] * GLOBAL_DATA['feature_sample_rate']
@@ -767,17 +770,18 @@ def main(args):
                     'EEG C3', 'EEG C4', 'EEG CZ', 'EEG T3', 'EEG T4', 
                     'EEG P3', 'EEG P4', 'EEG O1', 'EEG O2', 'EEG T5', 'EEG T6', 'EEG PZ', 'EEG FZ']
 
-    eeg_data_directory = "$PATH_TO_EEG/{}".format(data_type)
+    eeg_data_directory = "/mnt/data/edf/{}".format(data_type)
     # eeg_data_directory = "/mnt/aitrics_ext/ext01/shared/edf/tuh_final/{}".format(data_type)
     
-    if label_type == "tse":
+    if label_type == "csv":
         disease_labels =  {'bckg': 0, 'cpsz': 1, 'mysz': 2, 'gnsz': 3, 'fnsz': 4, 'tnsz': 5, 'tcsz': 6, 'spsz': 7, 'absz': 8}
-    elif label_type == "tse_bi":
+    elif label_type == "csv_bi":
         disease_labels =  {'bckg': 0, 'seiz': 1}
     disease_labels_inv = {v: k for k, v in disease_labels.items()}
     
     edf_list1 = search_walk({'path': eeg_data_directory, 'extension': ".edf"})
     edf_list2 = search_walk({'path': eeg_data_directory, 'extension': ".EDF"})
+
     if edf_list2:
         edf_list = edf_list1 + edf_list2
     else:

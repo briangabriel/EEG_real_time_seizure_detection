@@ -36,6 +36,8 @@ def search_walk(info):
     root_path = info.get('path')
     extension = info.get('extension')
 
+    print(info)
+
     for (path, dir, files) in os.walk(root_path):
         for filename in files:
             ext = os.path.splitext(filename)[-1]
