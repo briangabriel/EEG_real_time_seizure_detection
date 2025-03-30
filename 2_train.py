@@ -40,6 +40,7 @@ from builder.utils.utils import set_seeds, set_devices
 from builder.utils.cosine_annealing_with_warmup import CosineAnnealingWarmUpRestarts
 from builder.utils.cosine_annealing_with_warmupSingle import CosineAnnealingWarmUpSingle
 from builder.trainer import get_trainer
+from builder.utils.result_utils import *
 from builder.trainer import *
 
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
@@ -53,7 +54,7 @@ for seed_num in args.seed_list:
     args.seed = seed_num
     set_seeds(args)
     device = set_devices(args)
-    print(device)
+    print("device ", device)
     logger = Logger(args)
     logger.evaluator.best_auc = 0
 
@@ -109,24 +110,28 @@ for seed_num in args.seed_list:
     logger.loss = 0
 
     start = time.time()
+    print("args.epochs: ", args.epochs)
+    
     pbar = tqdm(total=args.epochs, initial=0, bar_format="{desc:<5}{percentage:3.0f}%|{bar:10}{r_bar}")
     for epoch in range(start_epoch, args.epochs+1):
         epoch_losses =[]
         loss = 0
 
+        
         for train_batch in train_loader:
             train_x, train_y, seq_lengths, target_lengths, aug_list, signal_name_list = train_batch
             train_x, train_y = train_x.to(device), train_y.to(device)
             iteration += 1
-         
-            model, iter_loss = get_trainer(args, iteration, train_x, train_y, seq_lengths, target_lengths, model, logger, device, scheduler, optimizer, criterion, signal_name_list)
-            logger.loss += np.mean(iter_loss)
 
+            model, iter_loss = get_trainer(args, iteration, train_x, train_y, seq_lengths, target_lengths, model, logger, device, scheduler, optimizer, criterion, signal_name_list)
+
+            logger.loss += np.mean(iter_loss)
+            
             ### LOGGING
             if iteration % args.log_iter == 0:
                 logger.log_tqdm(epoch, iteration, pbar)
                 logger.log_scalars(iteration)
-
+            
             ### VALIDATION
             if iteration % (one_epoch_iter_num//val_per_epochs) == 0:
                 model.eval()

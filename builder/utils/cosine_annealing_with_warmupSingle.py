@@ -11,7 +11,8 @@
 
 import math
 import torch
-from torch.optim.lr_scheduler import _LRScheduler
+from torch import inf, Tensor
+from torch.optim.lr_scheduler import _LRScheduler, OneCycleLR
 import warnings
 
 
@@ -118,9 +119,9 @@ class CosineAnnealingWarmUpSingle(torch.optim.lr_scheduler.OneCycleLR):
 
 
     def get_lr(self):
-        if not self._get_lr_called_within_step:
-            warnings.warn("To get the last learning rate computed by the scheduler, "
-                          "please use `get_last_lr()`.", UserWarning)
+        # if not self._get_lr_called_within_step:
+        #     warnings.warn("To get the last learning rate computed by the scheduler, "
+        #                   "please use `get_last_lr()`.", UserWarning)
 
         lrs = []
         step_num = self.last_epoch
@@ -150,3 +151,17 @@ class CosineAnnealingWarmUpSingle(torch.optim.lr_scheduler.OneCycleLR):
                     group['momentum'] = computed_momentum
 
         return lrs
+
+    def _format_param(self, name: str, optimizer, param):
+        """Return correctly formatted lr/momentum for each param group."""
+
+        if isinstance(param, (list, tuple)):
+            if len(param) != len(optimizer.param_groups):
+                raise ValueError(
+                    f"{name} must have the same length as optimizer.param_groups. "
+                    f"{name} has {len(param)} values, param_groups has {len(optimizer.param_groups)}."
+                )
+        else:
+            param = [param] * len(optimizer.param_groups)
+
+        return list(map(lambda x: x.clone() if isinstance(x, Tensor) else x, param))

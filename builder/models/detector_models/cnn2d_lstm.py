@@ -19,9 +19,9 @@ from builder.models.feature_extractor.spectrogram_feature_binary import *
 from builder.models.feature_extractor.sincnet_feature import SINCNET_FEATURE
 from builder.models.feature_extractor.lfcc_feature import LFCC_FEATURE
 
-class CNN2D_LSTM_V8(nn.Module):
+class CNN2D_LSTM(nn.Module):
         def __init__(self, args, device):
-                super(CNN2D_LSTM_V8, self).__init__()      
+                super(CNN2D_LSTM, self).__init__()      
                 self.args = args
 
                 self.num_layers = args.num_layers
@@ -162,10 +162,10 @@ class CNN2D_LSTM_V8(nn.Module):
                         x = x.reshape(x.size(0), -1, x.size(3)).unsqueeze(1)
                 else:
                         x = x.unsqueeze(1)
-                print(x.shape)
+                # print(x.shape)
                 x = self.features(x)
-                print(x.shape)
-                exit(1)
+                # print(x.shape)
+                # exit(1)
                 x = self.agvpool(x)
                 x = torch.squeeze(x, 2)
                 x = x.permute(0, 2, 1)

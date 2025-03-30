@@ -104,7 +104,7 @@ def sliding_window_v1(args, iteration, train_x, train_y, seq_lengths, target_len
             slice_end = x_idx+args.window_size_sig
         
         seq_slice = train_x[slice_start:slice_end].permute(1, 0, 2)
-        # print("seq_slice: ", seq_slice[:,1,:10])
+        #print("seq_slice: ", seq_slice[:,1,:10])
         train_y = train_y.type(torch.FloatTensor)
         target_temp = train_y[y_idx: y_idx+args.window_size_label]
 
@@ -120,6 +120,7 @@ def sliding_window_v1(args, iteration, train_x, train_y, seq_lengths, target_len
             optimizer.zero_grad()
 
         logits, maps = model(seq_slice)
+
         # print("maps: ", maps)
         # exit(1)
         logits = logits.type(torch.FloatTensor)

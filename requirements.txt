@@ -9,7 +9,8 @@ openpyxl
 tqdm
 tensorboardX
 xlrd==1.2.0
-torchsummary
+torchinfo
+torchaudio
 speechpy
 grad-cam
 opencv-python
