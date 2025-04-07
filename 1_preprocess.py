@@ -300,6 +300,7 @@ def generate_training_data_leadwise_tuh_train(file):
         new_data = {}
 
 def generate_training_data_leadwise_tuh_train_final(file):
+    print("This file is causing the crash --- ", file)
     sample_rate = GLOBAL_DATA['sample_rate']    # EX) 200Hz
     file_name = ".".join(file.split(".")[:-1])  # EX) $PATH_TO_EEG/train/01_tcp_ar/072/00007235/s003_2010_11_20/00007235_s003_t000
     data_file_name = file_name.split("/")[-1]   # EX) 00007235_s003_t000
@@ -775,8 +776,8 @@ def main(args):
     
     if label_type == "csv":
         disease_labels =  {'bckg': 0, 'cpsz': 1, 'mysz': 2, 'gnsz': 3, 'fnsz': 4, 'tnsz': 5, 'tcsz': 6, 'spsz': 7, 'absz': 8}
-    elif label_type == "csv_bi":
-        disease_labels =  {'bckg': 0, 'seiz': 1}
+    else:
+        disease_labels = {"bckg": 0, "seiz": 1}
     disease_labels_inv = {v: k for k, v in disease_labels.items()}
     
     edf_list1 = search_walk({'path': eeg_data_directory, 'extension': ".edf"})
@@ -803,8 +804,29 @@ def main(args):
     GLOBAL_DATA['min_binary_slicelength'] = args.min_binary_slicelength
     GLOBAL_DATA['min_binary_edge_seiz'] = args.min_binary_edge_seiz
 
-    target_dictionary = {0:0}
+    target_dictionary = {0: 0}
     selected_diseases = []
+    # args.disease_type = args.disease_type.split(",")
+    # print(args.disease_type)
+    label_exception = list(
+        set(args.disease_type)
+        - set(
+            [
+                "gnsz",
+                "fnsz",
+                "spsz",
+                "cpsz",
+                "absz",
+                "tnsz",
+                "tcsz",
+                "mysz",
+                "bckg",
+                "seiz",
+            ]
+        )
+    )
+    assert len(label_exception) == 0, f"Unexpected label identified: {label_exception}"
+    print(args.disease_type)
     for idx, i in enumerate(args.disease_type):
         selected_diseases.append(str(disease_labels[i]))
         target_dictionary[disease_labels[i]] = idx + 1
@@ -859,7 +881,7 @@ if __name__ == '__main__':
                         choices=['anomaly', 'multiclassification', 'binary'])                   
 
     ##### Target Grouping #####
-    parser.add_argument('--disease_type', type=list, default=['gnsz', 'fnsz', 'spsz', 'cpsz', 'absz', 'tnsz', 'tcsz', 'mysz'], choices=['gnsz', 'fnsz', 'spsz', 'cpsz', 'absz', 'tnsz', 'tcsz', 'mysz'])
+    parser.add_argument('--disease_type', type=list, default=[ "seiz"], choices=['gnsz', 'fnsz', 'spsz', 'cpsz', 'absz', 'tnsz', 'tcsz', 'mysz', "seiz"])
 
     ### for binary detector ###
     # key numbers represent index of --disease_type + 1  ### -1 is "not being used"

@@ -1,0 +1,1 @@
+python3 1_preprocess.py --data_type train --cpu_num 4 --label_type csv --save_directory /mnt/results --samplerate 100

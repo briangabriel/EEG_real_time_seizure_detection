@@ -17,3 +17,5 @@ opencv-python
 ttach
 hyperopt
 mne
+torchaudio
+torchinfo
