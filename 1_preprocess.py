@@ -300,7 +300,7 @@ def generate_training_data_leadwise_tuh_train(file):
         new_data = {}
 
 def generate_training_data_leadwise_tuh_train_final(file):
-    print("This file is causing the crash --- ", file)
+    #print("This file is causing the crash --- ", file)
     sample_rate = GLOBAL_DATA['sample_rate']    # EX) 200Hz
     file_name = ".".join(file.split(".")[:-1])  # EX) $PATH_TO_EEG/train/01_tcp_ar/072/00007235/s003_2010_11_20/00007235_s003_t000
     data_file_name = file_name.split("/")[-1]   # EX) 00007235_s003_t000
@@ -881,7 +881,7 @@ if __name__ == '__main__':
                         choices=['anomaly', 'multiclassification', 'binary'])                   
 
     ##### Target Grouping #####
-    parser.add_argument('--disease_type', type=list, default=[ "seiz"], choices=['gnsz', 'fnsz', 'spsz', 'cpsz', 'absz', 'tnsz', 'tcsz', 'mysz', "seiz"])
+    parser.add_argument('--disease_type', type=list, default=[ 'gnsz', 'fnsz', 'spsz', 'cpsz', 'absz', 'tnsz', 'tcsz', 'mysz'], choices=['gnsz', 'fnsz', 'spsz', 'cpsz', 'absz', 'tnsz', 'tcsz', 'mysz', "seiz"])
 
     ### for binary detector ###
     # key numbers represent index of --disease_type + 1  ### -1 is "not being used"
